@@ -5,6 +5,9 @@ import com.codeborne.selenide.Selenide;
 import guru.qa.niffler.jupiter.GenerateSpend;
 import guru.qa.niffler.model.CurrencyValues;
 import guru.qa.niffler.model.SpendJson;
+import guru.qa.niffler.pages.LoginPage;
+import guru.qa.niffler.pages.MainPage;
+import guru.qa.niffler.pages.WelcomePage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,18 +17,20 @@ import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.$;
 
 public class SpendingTest {
-
+  static  MainPage mainPage;
   static {
     Configuration.browserSize = "1980x1024";
+
   }
 
   @BeforeEach
   void doLogin() {
     Selenide.open("http://127.0.0.1:3000/main");
-    $("a[href*='redirect']").click();
-    $("input[name='username']").setValue("duck");
-    $("input[name='password']").setValue("12345");
-    $("button[type='submit']").click();
+    WelcomePage welcomePage = new WelcomePage();
+    LoginPage loginPage = welcomePage.loginButtonClick();
+    loginPage.setValue(loginPage.getUserNameInput(), "duck");
+    loginPage.setValue(loginPage.getPasswordInput(), "12345");
+    mainPage = loginPage.submitButtonClick();
   }
 
   @GenerateSpend(
@@ -37,17 +42,10 @@ public class SpendingTest {
   )
   @Test
   void spendingShouldBeDeletedByButtonDeleteSpending(SpendJson spend) {
-    $(".spendings-table tbody")
-        .$$("tr")
-        .find(text(spend.description()))
-        .$$("td")
-        .first()
-        .click();
+    mainPage.tickFirstSpendingCheckBox(spend.description());
+    mainPage.clickDeleteButton();
 
-    $(byText("Delete selected"))
-        .click();
-
-    $(".spendings-table tbody")
+    $(mainPage.spendingsTableSelector())
         .$$("tr")
         .shouldHave(size(0));
   }
