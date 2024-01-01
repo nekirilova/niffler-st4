@@ -2,7 +2,9 @@ package guru.qa.niffler.test;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
+import guru.qa.niffler.jupiter.GenerateCategory;
 import guru.qa.niffler.jupiter.GenerateSpend;
+import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.model.CurrencyValues;
 import guru.qa.niffler.model.SpendJson;
 import guru.qa.niffler.pages.LoginPage;
@@ -12,8 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.codeborne.selenide.CollectionCondition.size;
-import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.$;
 
 public class SpendingTest {
@@ -33,6 +33,10 @@ public class SpendingTest {
     mainPage = loginPage.submitButtonClick();
   }
 
+  @GenerateCategory(
+          username = "duck",
+          category = "Обучение"
+  )
   @GenerateSpend(
       username = "duck",
       description = "QA.GURU Advanced 4",
@@ -41,7 +45,7 @@ public class SpendingTest {
       currency = CurrencyValues.RUB
   )
   @Test
-  void spendingShouldBeDeletedByButtonDeleteSpending(SpendJson spend) {
+  void spendingShouldBeDeletedByButtonDeleteSpending(CategoryJson category, SpendJson spend) {
     mainPage.tickFirstSpendingCheckBox(spend.description());
     mainPage.clickDeleteButton();
 
