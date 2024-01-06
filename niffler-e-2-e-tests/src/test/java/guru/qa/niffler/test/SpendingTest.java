@@ -16,8 +16,13 @@ import org.junit.jupiter.api.Test;
 import static com.codeborne.selenide.CollectionCondition.size;
 import static com.codeborne.selenide.Selenide.$;
 
+
 public class SpendingTest {
-  static  MainPage mainPage;
+
+  private MainPage mainPage;
+  private WelcomePage welcomePage;
+  private LoginPage loginPage;
+
   static {
     Configuration.browserSize = "1980x1024";
 
@@ -26,10 +31,10 @@ public class SpendingTest {
   @BeforeEach
   void doLogin() {
     Selenide.open("http://127.0.0.1:3000/main");
-    WelcomePage welcomePage = new WelcomePage();
-    LoginPage loginPage = welcomePage.loginButtonClick();
-    loginPage.setValue(loginPage.getUserNameInput(), "duck");
-    loginPage.setValue(loginPage.getPasswordInput(), "12345");
+    welcomePage = new WelcomePage();
+    loginPage = welcomePage.loginButtonClick();
+    loginPage.setUsername("duck");
+    loginPage.setPassword("12345");
     mainPage = loginPage.submitButtonClick();
   }
 
@@ -47,10 +52,8 @@ public class SpendingTest {
   @Test
   void spendingShouldBeDeletedByButtonDeleteSpending(CategoryJson category, SpendJson spend) {
     mainPage.tickFirstSpendingCheckBox(spend.description());
-    mainPage.clickDeleteButton();
+    mainPage.clickDeleteSpendingButton();
+    mainPage.assertThatTableIsEmptyAfterDeletingSpending(0);
 
-    $(mainPage.spendingsTableSelector())
-        .$$("tr")
-        .shouldHave(size(0));
   }
 }

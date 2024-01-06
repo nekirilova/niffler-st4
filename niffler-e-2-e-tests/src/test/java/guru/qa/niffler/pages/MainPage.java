@@ -1,33 +1,38 @@
 package guru.qa.niffler.pages;
 
+import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
+import static com.codeborne.selenide.CollectionCondition.size;
 import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Selectors.byXpath;
 import static com.codeborne.selenide.Selenide.$;
 
 public class MainPage {
-    private final By SPENDING_TABLE = By.cssSelector(".spendings-table tbody");
-    private final By DELETE_BUTTON = By.xpath(".//button[text()='Delete selected']");
+    private final SelenideElement spendingTable = $(".spendings-table tbody");
+    private final SelenideElement deleteSpendingButton = $(byXpath(".//button[text()='Delete selected']"));
 
     @Step("Отметить первый спендинг")
     public MainPage tickFirstSpendingCheckBox(String description) {
-        $(SPENDING_TABLE)
+        spendingTable
                 .$$("tr")
                 .find(text(description))
-                .$$("td")
-                .first()
+                .$("td")
                 .scrollIntoView(true)
                 .click();
         return this;
     }
-    @Step("Нажать кнопку для удаления")
-    public MainPage clickDeleteButton() {
-        $(DELETE_BUTTON).click();
+    @Step("Нажать кнопку для удаления спендинга")
+    public MainPage clickDeleteSpendingButton() {
+       deleteSpendingButton.click();
         return this;
     }
-    public By spendingsTableSelector() {
-        return SPENDING_TABLE;
+
+    @Step("Проверить, что в таблице после удаления спендинга не осталось строк")
+    public MainPage assertThatTableIsEmptyAfterDeletingSpending(int expectedSize) {
+        spendingTable.$$("tr").shouldHave(size(expectedSize));
+        return this;
     }
 
 }

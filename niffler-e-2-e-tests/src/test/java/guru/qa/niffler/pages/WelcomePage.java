@@ -1,22 +1,25 @@
 package guru.qa.niffler.pages;
 
+import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
 import static com.codeborne.selenide.Selenide.$;
 
 public class WelcomePage {
-    private final By LOGIN_BUTTON = By.cssSelector("a[href*='redirect']");
-    private final By REGISTER_BUTTON = By.cssSelector("a[href*='register']");
+
+    private final SelenideElement loginButton = $("a[href*='redirect']");
+    private final SelenideElement registerButton = $("a[href*='register']");
+
     @Step("Нажать кнопку логина")
     public LoginPage loginButtonClick() {
-        $(LOGIN_BUTTON).click();
+        loginButton.click();
         return new LoginPage();
     }
 
     @Step("Нажать кнопку регистрации")
     public RegisterPage registerButtonClick() {
-        $(REGISTER_BUTTON).click();
+       registerButton.click();
         return new RegisterPage();
     }
 }

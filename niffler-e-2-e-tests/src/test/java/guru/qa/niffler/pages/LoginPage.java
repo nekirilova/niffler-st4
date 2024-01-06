@@ -1,5 +1,6 @@
 package guru.qa.niffler.pages;
 
+import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
@@ -8,25 +9,26 @@ import static com.codeborne.selenide.Selenide.$;
 
 public class LoginPage {
 
-    private final By USERNAME_INPUT = By.cssSelector("input[name='username']");
-    private final By PASSWORD_INPUT = By.cssSelector("input[name='password']");
-    private final By SUBMIT_BUTTON = By.cssSelector("button[type='submit']");
+    private final SelenideElement usernameInput = $("input[name='username']");
+    private final SelenideElement passwordInput = $("input[name='password']");
+    private final SelenideElement submitButton = $("button[type='submit']");
 
-    @Step("Заполнить поле")
-    public LoginPage setValue(By selector, String value) {
-        $(selector).setValue(value);
+    @Step("Заполнить поле логин")
+    public LoginPage setUsername(String username) {
+        usernameInput.setValue(username);
+        return this;
+    }
+
+    @Step("Заполнить поле пароль")
+    public LoginPage setPassword(String password) {
+        passwordInput.setValue(password);
         return this;
     }
 
     @Step("Нажать кнопку подтверждения")
     public MainPage submitButtonClick() {
-        $(SUBMIT_BUTTON).click();
+        submitButton.click();
         return new MainPage();
     }
-    public By getUserNameInput() {
-        return USERNAME_INPUT;
-    }
-    public By getPasswordInput() {
-        return PASSWORD_INPUT;
-    }
+
 }
