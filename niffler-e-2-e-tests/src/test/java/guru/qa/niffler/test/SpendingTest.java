@@ -2,6 +2,8 @@ package guru.qa.niffler.test;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
+import com.codeborne.selenide.WebDriverRunner;
+import guru.qa.niffler.jupiter.DisabledByIssue;
 import guru.qa.niffler.jupiter.GenerateCategory;
 import guru.qa.niffler.jupiter.GenerateSpend;
 import guru.qa.niffler.model.CategoryJson;
@@ -10,14 +12,21 @@ import guru.qa.niffler.model.SpendJson;
 import guru.qa.niffler.pages.LoginPage;
 import guru.qa.niffler.pages.MainPage;
 import guru.qa.niffler.pages.WelcomePage;
+import io.qameta.allure.Allure;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+
+import java.io.ByteArrayInputStream;
 
 import static com.codeborne.selenide.CollectionCondition.size;
 import static com.codeborne.selenide.Selenide.$;
 
 
-public class SpendingTest {
+public class SpendingTest extends BaseWebTest{
 
   private MainPage mainPage;
   private WelcomePage welcomePage;
@@ -38,6 +47,7 @@ public class SpendingTest {
     mainPage = loginPage.submitButtonClick();
   }
 
+
   @GenerateCategory(
           username = "duck",
           category = "Обучение"
@@ -49,10 +59,11 @@ public class SpendingTest {
       category = "Обучение",
       currency = CurrencyValues.RUB
   )
+  @DisabledByIssue("59")
   @Test
   void spendingShouldBeDeletedByButtonDeleteSpending(CategoryJson category, SpendJson spend) {
-    mainPage.tickFirstSpendingCheckBox(spend.description());
-    mainPage.clickDeleteSpendingButton();
+    mainPage.tickFirstSpendingCheckBox(spend.description())
+            .clickDeleteSpendingButton();
     mainPage.assertThatTableIsEmptyAfterDeletingSpending(0);
 
   }
