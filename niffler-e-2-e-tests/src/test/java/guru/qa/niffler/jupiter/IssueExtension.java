@@ -39,7 +39,6 @@ public class IssueExtension implements ExecutionCondition {
                 JsonNode responseBody = ghApi.issue(
                         "Bearer " + System
                                 .getenv("GH_TOKEN"),
-                       // "Bearer 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",
                         disabledByIssue.value()).execute().body();
                 return "open".equals(responseBody.get("state").asText())
                         ? ConditionEvaluationResult.disabled("Disabled by issue")
