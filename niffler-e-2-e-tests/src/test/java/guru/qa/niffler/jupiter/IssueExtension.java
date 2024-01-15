@@ -3,6 +3,7 @@ package guru.qa.niffler.jupiter;
 import com.fasterxml.jackson.databind.JsonNode;
 import guru.qa.niffler.api.GhApi;
 import okhttp3.OkHttpClient;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.Extension;
@@ -34,16 +35,19 @@ public class IssueExtension implements ExecutionCondition {
                         DisabledByIssue.class
                 ).orElse(null)
         );
+
+
         if(disabledByIssue != null) {
             try {
                 JsonNode responseBody = ghApi.issue(
-                        "Bearer " + System
-                                .getenv("GH_TOKEN"),
-                       // "Bearer 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",
-                        disabledByIssue.value()).execute().body();
-                return "open".equals(responseBody.get("state").asText())
-                        ? ConditionEvaluationResult.disabled("Disabled by issue")
-                        : ConditionEvaluationResult.enabled("Issue was closed");
+                        "Bearer " + System.getenv("GH_TOKEN"),
+                        disabledByIssue.value()
+                ).execute().body();
+                if (responseBody != null) {
+                    return "open".equals(responseBody.get("state").asText())
+                            ? ConditionEvaluationResult.disabled("Disabled by issue")
+                            : ConditionEvaluationResult.enabled("Issue was closed");
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
