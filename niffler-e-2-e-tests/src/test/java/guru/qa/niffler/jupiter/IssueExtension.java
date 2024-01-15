@@ -40,6 +40,7 @@ public class IssueExtension implements ExecutionCondition {
         if(disabledByIssue != null) {
             try {
                 JsonNode responseBody = ghApi.issue(
+
                         "Bearer " + System.getenv("GH_TOKEN"),
                         disabledByIssue.value()
                 ).execute().body();
@@ -48,6 +49,7 @@ public class IssueExtension implements ExecutionCondition {
                             ? ConditionEvaluationResult.disabled("Disabled by issue")
                             : ConditionEvaluationResult.enabled("Issue was closed");
                 }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
