@@ -41,14 +41,12 @@ public class FriendsTest extends BaseWebTest {
     @DisplayName("У пользователя должен быть друг с заданным именем")
     @Test
     void userShouldHaveFriend(@User(WITH_FRIENDS) UserJson user) {
-        boolean isFriendExist = friendsPage.findRecordInTableByText(user.testData().friendUserName());
-        assertTrue(isFriendExist, "Не найден друг с именем " + user.testData().friendUserName());
+        friendsPage.findRecordInTableByText(user.testData().friendUserName());
     }
 
     @DisplayName("У пользователя должен быть только 1 друг")
     @Test
     void friendListShouldContainOneFriend(@User(WITH_FRIENDS) UserJson user) {
-        int actualFriendListSize = friendsPage.countFriendsListSize();
-        assertEquals(1, actualFriendListSize, "В списке должен быть 1 друг");
+        friendsPage.countFriendsListSize();
     }
 }

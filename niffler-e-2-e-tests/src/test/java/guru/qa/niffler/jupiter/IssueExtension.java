@@ -36,7 +36,6 @@ public class IssueExtension implements ExecutionCondition {
                 ).orElse(null)
         );
 
-
         if(disabledByIssue != null) {
             try {
                 JsonNode responseBody = ghApi.issue(

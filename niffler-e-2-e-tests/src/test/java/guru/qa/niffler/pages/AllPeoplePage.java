@@ -13,9 +13,9 @@ public class AllPeoplePage {
     private final SelenideElement peopleTable = $(".abstract-table tbody");
 
     @Step("Найти в таблице всех пользователей запись")
-    public boolean findRecordInTableByText(String text) {
-        return peopleTable
-                .$$("tr").find(text(text)).isDisplayed();
+    public void findRecordInTableByText(String text) {
+        peopleTable
+                .$$("tr").find(text(text)).shouldBe(visible);
     }
 
     @Step("Проверить, что запрос на дружбу отправлен нужному пользователю")

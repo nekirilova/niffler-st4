@@ -33,7 +33,9 @@ public class LoginPage {
 
     @Step("Авторизоваться в приложении")
     public MainPage authorizeInApp(String username, String password) {
-        return setUsername(username).setPassword(password).submitButtonClick();
+        return setUsername(username)
+                .setPassword(password)
+                .submitButtonClick();
     }
 
 }
