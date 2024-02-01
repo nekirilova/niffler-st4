@@ -13,13 +13,15 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
     public static final ExtensionContext.Namespace NAMESPACE
             = ExtensionContext.Namespace.create(UserAuthExtension.class);
     private final UserRepository userRepository = new UserRepositoryJdbc();
+    private UserAuthEntity userAuth;
+    private UserEntity user;
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         Optional<DbUser> userDb = AnnotationSupport.findAnnotation(
                 extensionContext.getRequiredTestMethod(),
                DbUser.class);
         if(userDb.isPresent()) {
-            UserAuthEntity userAuth = UserAuthEntity.builder()
+            userAuth = UserAuthEntity.builder()
                     .username(userDb.get().username())
                     .password(userDb.get().password())
                     .enabled(true)
@@ -33,20 +35,21 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
                                 return  ae;
                             }).toList())
                     .build();
-            UserEntity user = UserEntity.builder()
+            user = UserEntity.builder()
                     .username(userDb.get().username())
                     .currency(CurrencyValues.RUB)
                     .build();
             userRepository.createInAuth(userAuth);
             userRepository.createInUserData(user);
             extensionContext.getStore(NAMESPACE)
-                    .put("userAuth", userRepository);
+                    .put("userAuth", userAuth);
         }
     }
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
-
+        userRepository.deleteInAuthById(userAuth.getId());
+        userRepository.deleteInUserDataById(user.getId());
     }
 
 

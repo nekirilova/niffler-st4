@@ -55,7 +55,7 @@ public class LoginTest extends BaseWebTest{
 //        userRepository.deleteInUserDataById(user.getId());
 //    }
 
-    @DbUser(username = "valentina", password = "12345")
+    @DbUser(username = "valentina2", password = "12345")
     @Test
     void statisticShouldBeVisibleAfterLogin(UserAuthEntity userAuth) {
         Selenide.open("http://127.0.0.1:3000/main");
