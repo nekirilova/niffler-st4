@@ -63,7 +63,7 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
 
     @Override
     public UserAuthEntity resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return extensionContext.getStore(SpendExtension.NAMESPACE)
+        return extensionContext.getStore(UserAuthExtension.NAMESPACE)
                 .get("userAuth", UserAuthEntity.class);
     }
 }

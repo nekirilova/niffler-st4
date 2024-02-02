@@ -115,9 +115,9 @@ public class UserRepositoryJdbc implements UserRepository{
                  PreparedStatement userPs = connection.prepareStatement("DELETE FROM \"user\" " +
                          "WHERE id = ?"))
             {
-                authorityPs.setString(1, id.toString());
+                authorityPs.setObject(1, id);
                 authorityPs.executeUpdate();
-                userPs.setString(1, id.toString());
+                userPs.setObject(1, id);
                 userPs.executeUpdate();
 
             } catch (Exception e){
@@ -139,7 +139,7 @@ public class UserRepositoryJdbc implements UserRepository{
             try (PreparedStatement ps = connection.prepareStatement("DELETE FROM \"user\" " +
                          "WHERE id = ?"))
             {
-                ps.setString(1, id.toString());
+                ps.setObject(1, id);
                 ps.executeUpdate();
 
             } catch (Exception e){
