@@ -16,7 +16,7 @@ public class LoginTest extends BaseWebTest {
     private WelcomePage welcomePage;
     private LoginPage loginPage;
 
-    @DbUser(username = "isolda", password = "12345")
+    @DbUser(username = "isolda1", password = "12345")
     @Test
     void statisticShouldBeVisibleAfterLogin(UserAuthEntity userAuth) {
         Selenide.open("http://127.0.0.1:3000/main");

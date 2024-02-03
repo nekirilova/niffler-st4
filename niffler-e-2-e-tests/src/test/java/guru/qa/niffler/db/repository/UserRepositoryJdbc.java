@@ -2,9 +2,7 @@ package guru.qa.niffler.db.repository;
 
 import guru.qa.niffler.db.DataSourceProvider;
 import guru.qa.niffler.db.JdbcUrl;
-import guru.qa.niffler.db.model.Authority;
-import guru.qa.niffler.db.model.UserAuthEntity;
-import guru.qa.niffler.db.model.UserEntity;
+import guru.qa.niffler.db.model.*;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -13,6 +11,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Currency;
+import java.util.Optional;
 import java.util.UUID;
 
 public class UserRepositoryJdbc implements UserRepository{
@@ -77,31 +77,24 @@ public class UserRepositoryJdbc implements UserRepository{
 
             try (PreparedStatement ps = connection.prepareStatement("INSERT INTO \"user\" " +
                     "(username, currency) " +
-                    "VALUES (?, ?)", PreparedStatement.RETURN_GENERATED_KEYS))
-            {
+                    "VALUES (?, ?)", PreparedStatement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, user.getUsername());
                 ps.setString(2, user.getCurrency().name());
                 ps.executeUpdate();
 
                 UUID userId;
-                try(ResultSet keys = ps.getGeneratedKeys()){
-                    if(keys.next()) {
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) {
                         userId = UUID.fromString(keys.getString("id"));
                     } else {
-                        throw  new IllegalStateException("Can't find id");
+                        throw new IllegalStateException("Can't find id");
                     }
                 }
                 user.setId(userId);
-            } catch (Exception e){
-                connection.rollback();
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
+            } catch (SQLException e){
+               throw new RuntimeException(e);
+            }
         return user;
     }
 
@@ -136,11 +129,20 @@ public class UserRepositoryJdbc implements UserRepository{
         try(Connection connection = udDs.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement ps = connection.prepareStatement("DELETE FROM \"user\" " +
-                         "WHERE id = ?"))
+                         "WHERE id = ?");
+            PreparedStatement friendPs = connection.prepareStatement("DELETE FROM \"friendship\" " +
+                    "WHERE user_id = ?");
+                 PreparedStatement invitedFriendPs = connection.prepareStatement("DELETE FROM \"friendship\" " +
+                         "WHERE friend_id = ?");
+            )
             {
                 ps.setObject(1, id);
+                friendPs.setObject(1, id);
+                invitedFriendPs.setObject(1, id);
                 ps.executeUpdate();
-
+                friendPs.executeUpdate();
+                invitedFriendPs.executeUpdate();
+                connection.commit();
             } catch (Exception e){
                 connection.rollback();
                 throw e;
@@ -196,28 +198,6 @@ public class UserRepositoryJdbc implements UserRepository{
                 ps.setString(4, user.getSurname());
                 ps.setBytes(5, user.getPhoto());
                 ps.executeUpdate();
-            } catch (Exception e){
-                connection.rollback();
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return user;
-    }
-
-    @Override
-    public UserAuthEntity readInAuth(UserAuthEntity user) {
-        try(Connection connection = authDs.getConnection()) {
-            connection.setAutoCommit(false);
-            try (PreparedStatement userPs = connection.prepareStatement("SELECT FROM \"user\" " +
-                    "WHERE id = ?"))
-            {
-                userPs.setObject(1, user.getId());
-                userPs.execute();
                 connection.commit();
             } catch (Exception e){
                 connection.rollback();
@@ -233,24 +213,65 @@ public class UserRepositoryJdbc implements UserRepository{
     }
 
     @Override
-    public UserEntity readInUserData(UserEntity user) {
-        try(Connection connection = udDs.getConnection()) {
+    public Optional<UserAuthEntity> readInAuth(UUID id) {
+       try(Connection connection = authDs.getConnection();
+           PreparedStatement userPs = connection.prepareStatement("SELECT * FROM \"user\" u " +
+                   "JOIN \"authority\" a ON a.user_id = u.id" +
+                    "WHERE u.id = ?")){
+                userPs.setObject(1, id);
+                userPs.execute();
+                UserAuthEntity user = UserAuthEntity.builder().build();
+                boolean userIsProcessed = false;
+                try(ResultSet result = userPs.getResultSet()) {
+                    while (result.next()) {
+                        if (!userIsProcessed) {
+                            user.setId(result.getObject(1, UUID.class));
+                            user.setUsername(result.getString(2));
+                            user.setPassword(result.getString(3));
+                            user.setEnabled(result.getBoolean(4));
+                            user.setAccountNonExpired(result.getBoolean(5));
+                            user.setAccountNonLocked(result.getBoolean(6));
+                            user.setCredentialsNonExpired(result.getBoolean(7));
+                            userIsProcessed = true;
+                        }
+                        AuthorityEntity authority = new AuthorityEntity();
+                        authority.setId(result.getObject(8, UUID.class));
+                        authority.setAuthority(Authority.valueOf(result.getString(10)));
+                        user.getAuthorities().add(authority);
+                    }
+                }
+                    return userIsProcessed
+                            ? Optional.of(user)
+                            : Optional.empty();
+            } catch (SQLException e){
+                throw new RuntimeException(e);
+            }
+    }
 
-            try (PreparedStatement ps = connection.prepareStatement("SELECT FROM \"user\" " +
-                    "WHERE id = ?"))
-            {
+        @Override
+    public Optional<UserEntity> readInUserData(UUID id) {
+        UserEntity user = UserEntity.builder().build();
+        try(Connection connection = udDs.getConnection();
+            PreparedStatement ps = connection.prepareStatement("SELECT FROM \"user\" " +
+                    "WHERE id = ?")){
                 ps.setObject(1, user.getId());
                 ps.execute();
-            } catch (Exception e){
-                connection.rollback();
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
+                try(ResultSet result = ps.getResultSet()) {
+                    if (result.next()) {
+                        user.setId(result.getObject("id", UUID.class));
+                        user.setUsername(result.getString("username"));
+                        user.setCurrency(CurrencyValues.valueOf(result.getString("currency")));
+                        user.setFirstname(result.getString("firstname"));
+                        user.setSurname(result.getString("surname"));
+                        user.setPhoto(result.getBytes("photo"));
+                    } else {
+                        return Optional.empty();
+                    }
+                }
+            } catch(SQLException sqlException){
+                throw new RuntimeException(sqlException);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return user;
+        return Optional.of(user);
     }
+
 }
