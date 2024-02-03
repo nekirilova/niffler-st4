@@ -1,5 +1,6 @@
 package guru.qa.niffler.jupiter;
 
+import com.github.javafaker.Faker;
 import guru.qa.niffler.db.model.*;
 import guru.qa.niffler.db.repository.UserRepository;
 import guru.qa.niffler.db.repository.UserRepositoryJdbc;
@@ -15,15 +16,26 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
     private final UserRepository userRepository = new UserRepositoryJdbc();
     private UserAuthEntity userAuth;
     private UserEntity user;
+
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         Optional<DbUser> userDb = AnnotationSupport.findAnnotation(
                 extensionContext.getRequiredTestMethod(),
-               DbUser.class);
-        if(userDb.isPresent()) {
+                DbUser.class);
+
+        if (userDb.isPresent()) {
+            String username;
+            String password;
+            if (!userDb.get().username().isEmpty() && !userDb.get().password().isEmpty()) {
+                username = userDb.get().username();
+                password = userDb.get().password();
+            } else {
+                username = new Faker().funnyName().name();
+                password = new Faker().internet().password();
+            }
             userAuth = UserAuthEntity.builder()
-                    .username(userDb.get().username())
-                    .password(userDb.get().password())
+                    .username(username)
+                    .password(password)
                     .enabled(true)
                     .accountNonExpired(true)
                     .accountNonLocked(true)
@@ -32,11 +44,11 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
                             .map(e -> {
                                 AuthorityEntity ae = new AuthorityEntity();
                                 ae.setAuthority(e);
-                                return  ae;
+                                return ae;
                             }).toList())
                     .build();
             user = UserEntity.builder()
-                    .username(userDb.get().username())
+                    .username(username)
                     .currency(CurrencyValues.RUB)
                     .build();
             userRepository.createInAuth(userAuth);
@@ -51,7 +63,6 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
         userRepository.deleteInAuthById(userAuth.getId());
         userRepository.deleteInUserDataById(user.getId());
     }
-
 
 
     @Override

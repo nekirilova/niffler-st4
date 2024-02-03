@@ -81,7 +81,6 @@ public class UserRepositoryJdbc implements UserRepository{
             {
                 ps.setString(1, user.getUsername());
                 ps.setString(2, user.getCurrency().name());
-
                 ps.executeUpdate();
 
                 UUID userId;
@@ -151,5 +150,107 @@ public class UserRepositoryJdbc implements UserRepository{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public UserAuthEntity updateInAuth(UserAuthEntity user) {
+        try(Connection connection = authDs.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement userPs = connection.prepareStatement("UPDATE \"user\" " +
+                    "SET username = ?, password = ?, enabled = ?, account_non_expired = ?, " +
+                    "account_non_locked = ?, credentials_non_expired = ?) "))
+            {
+                userPs.setString(1, user.getUsername());
+                userPs.setString(2, pe.encode(user.getPassword()));
+                userPs.setBoolean(3, user.getEnabled());
+                userPs.setBoolean(4, user.getAccountNonExpired());
+                userPs.setBoolean(5, user.getAccountNonLocked());
+                userPs.setBoolean(6, user.getCredentialsNonExpired());
+
+                userPs.executeUpdate();
+                connection.commit();
+            } catch (Exception e){
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return user;
+    }
+
+    @Override
+    public UserEntity updateInUserData(UserEntity user) {
+        try(Connection connection = udDs.getConnection()) {
+
+            try (PreparedStatement ps = connection.prepareStatement("UPDATE \"user\" " +
+                    "SET username = ?, currency = ?, firstname = ?, surname = ?, " +
+                    "photo = ? "))
+            {
+                ps.setString(1, user.getUsername());
+                ps.setString(2, user.getCurrency().name());
+                ps.setString(3, user.getFirstname());
+                ps.setString(4, user.getSurname());
+                ps.setBytes(5, user.getPhoto());
+                ps.executeUpdate();
+            } catch (Exception e){
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return user;
+    }
+
+    @Override
+    public UserAuthEntity readInAuth(UserAuthEntity user) {
+        try(Connection connection = authDs.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement userPs = connection.prepareStatement("SELECT FROM \"user\" " +
+                    "WHERE id = ?"))
+            {
+                userPs.setObject(1, user.getId());
+                userPs.execute();
+                connection.commit();
+            } catch (Exception e){
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return user;
+    }
+
+    @Override
+    public UserEntity readInUserData(UserEntity user) {
+        try(Connection connection = udDs.getConnection()) {
+
+            try (PreparedStatement ps = connection.prepareStatement("SELECT FROM \"user\" " +
+                    "WHERE id = ?"))
+            {
+                ps.setObject(1, user.getId());
+                ps.execute();
+            } catch (Exception e){
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return user;
     }
 }
