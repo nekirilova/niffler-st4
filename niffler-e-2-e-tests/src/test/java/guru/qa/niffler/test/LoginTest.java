@@ -12,19 +12,16 @@ import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 
 public class LoginTest extends BaseWebTest {
-    private MainPage mainPage;
-    private WelcomePage welcomePage;
-    private LoginPage loginPage;
 
     @DbUser(username = "isolda1", password = "12345")
     @Test
     void statisticShouldBeVisibleAfterLogin(UserAuthEntity userAuth) {
         Selenide.open("http://127.0.0.1:3000/main");
-        welcomePage = new WelcomePage();
-        loginPage = welcomePage.loginButtonClick();
+        WelcomePage welcomePage = new WelcomePage();
+        LoginPage loginPage = welcomePage.loginButtonClick();
         loginPage.setUsername(userAuth.getUsername());
         loginPage.setPassword(userAuth.getPassword());
-        mainPage = loginPage.submitButtonClick();
+        loginPage.submitButtonClick();
         $(".main-content__section-stats").shouldBe(visible);
     }
 }
