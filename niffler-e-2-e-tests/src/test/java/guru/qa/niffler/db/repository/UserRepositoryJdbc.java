@@ -157,7 +157,6 @@ public class UserRepositoryJdbc implements UserRepository{
     @Override
     public UserAuthEntity updateInAuth(UserAuthEntity user) {
         try(Connection connection = authDs.getConnection()) {
-            connection.setAutoCommit(false);
             try (PreparedStatement userPs = connection.prepareStatement("UPDATE \"user\" " +
                     "SET username = ?, password = ?, enabled = ?, account_non_expired = ?, " +
                     "account_non_locked = ?, credentials_non_expired = ?) "))
@@ -174,8 +173,6 @@ public class UserRepositoryJdbc implements UserRepository{
             } catch (Exception e){
                 connection.rollback();
                 throw e;
-            } finally {
-                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -187,7 +184,6 @@ public class UserRepositoryJdbc implements UserRepository{
     @Override
     public UserEntity updateInUserData(UserEntity user) {
         try(Connection connection = udDs.getConnection()) {
-
             try (PreparedStatement ps = connection.prepareStatement("UPDATE \"user\" " +
                     "SET username = ?, currency = ?, firstname = ?, surname = ?, " +
                     "photo = ? "))
@@ -202,8 +198,6 @@ public class UserRepositoryJdbc implements UserRepository{
             } catch (Exception e){
                 connection.rollback();
                 throw e;
-            } finally {
-                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
