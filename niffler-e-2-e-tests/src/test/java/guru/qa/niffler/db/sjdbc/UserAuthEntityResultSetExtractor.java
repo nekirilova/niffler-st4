@@ -16,7 +16,7 @@ public class UserAuthEntityResultSetExtractor implements ResultSetExtractor<User
 
     @Override
     public UserAuthEntity extractData(ResultSet rs) throws SQLException, DataAccessException {
-        UserAuthEntity user = UserAuthEntity.builder().build();
+        UserAuthEntity user = new UserAuthEntity();
         boolean userIsProcessed = false;
         while (rs.next()) {
             if (!userIsProcessed) {
