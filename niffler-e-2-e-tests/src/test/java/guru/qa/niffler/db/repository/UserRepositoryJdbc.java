@@ -159,7 +159,7 @@ public class UserRepositoryJdbc implements UserRepository{
         try(Connection connection = authDs.getConnection()) {
             try (PreparedStatement userPs = connection.prepareStatement("UPDATE \"user\" " +
                     "SET username = ?, password = ?, enabled = ?, account_non_expired = ?, " +
-                    "account_non_locked = ?, credentials_non_expired = ?) "))
+                    "account_non_locked = ?, credentials_non_expired = ? WHERE id = ?"))
             {
                 userPs.setString(1, user.getUsername());
                 userPs.setString(2, pe.encode(user.getPassword()));
@@ -167,12 +167,15 @@ public class UserRepositoryJdbc implements UserRepository{
                 userPs.setBoolean(4, user.getAccountNonExpired());
                 userPs.setBoolean(5, user.getAccountNonLocked());
                 userPs.setBoolean(6, user.getCredentialsNonExpired());
+                userPs.setObject(7, user.getId());
 
                 userPs.executeUpdate();
                 connection.commit();
             } catch (Exception e){
                 connection.rollback();
                 throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -184,17 +187,37 @@ public class UserRepositoryJdbc implements UserRepository{
     @Override
     public UserEntity updateInUserData(UserEntity user) {
         try(Connection connection = udDs.getConnection()) {
+            connection.setAutoCommit(false);
             try (PreparedStatement ps = connection.prepareStatement("UPDATE \"user\" " +
                     "SET username = ?, currency = ?, firstname = ?, surname = ?, " +
-                    "photo = ? "))
+                    "photo = ? WHERE id = ?");
+                 PreparedStatement deleteFromAuthority = connection.prepareStatement(
+                         "DELETE FROM \"authority\" where user_id = ?");
+                 PreparedStatement updateAuthority = connection.prepareStatement(
+                         "INSERT INTO \"authority\" (user_id, authority) " +
+                                 "VALUES (?, ?)")
+            )
             {
                 ps.setString(1, user.getUsername());
                 ps.setString(2, user.getCurrency().name());
                 ps.setString(3, user.getFirstname());
                 ps.setString(4, user.getSurname());
                 ps.setBytes(5, user.getPhoto());
+                ps.setObject(6, user.getId());
                 ps.executeUpdate();
+
+                deleteFromAuthority.setObject(1, user.getId());
+                deleteFromAuthority.executeUpdate();
+
+                for (Authority authority : Authority.values()) {
+                    updateAuthority.setObject(1, user.getId());
+                    updateAuthority.setString(2, authority.name());
+                    updateAuthority.addBatch();
+                    updateAuthority.clearParameters();
+                }
+                updateAuthority.executeBatch();
                 connection.commit();
+                return user;
             } catch (Exception e){
                 connection.rollback();
                 throw e;
@@ -202,19 +225,17 @@ public class UserRepositoryJdbc implements UserRepository{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-        return user;
     }
 
     @Override
-    public Optional<UserAuthEntity> readInAuth(UUID id) {
+    public Optional<UserAuthEntity> findByIdInAuth(UUID id) {
        try(Connection connection = authDs.getConnection();
            PreparedStatement userPs = connection.prepareStatement("SELECT * FROM \"user\" u " +
                    "JOIN \"authority\" a ON a.user_id = u.id" +
                     "WHERE u.id = ?")){
                 userPs.setObject(1, id);
                 userPs.execute();
-                UserAuthEntity user = UserAuthEntity.builder().build();
+                UserAuthEntity user = new UserAuthEntity();
                 boolean userIsProcessed = false;
                 try(ResultSet result = userPs.getResultSet()) {
                     while (result.next()) {
@@ -243,7 +264,7 @@ public class UserRepositoryJdbc implements UserRepository{
     }
 
         @Override
-    public Optional<UserEntity> readInUserData(UUID id) {
+    public Optional<UserEntity> findByIdInUserData(UUID id) {
         UserEntity user = UserEntity.builder().build();
         try(Connection connection = udDs.getConnection();
             PreparedStatement ps = connection.prepareStatement("SELECT FROM \"user\" " +

@@ -3,7 +3,7 @@ package guru.qa.niffler.jupiter;
 import com.github.javafaker.Faker;
 import guru.qa.niffler.db.model.*;
 import guru.qa.niffler.db.repository.UserRepository;
-import guru.qa.niffler.db.repository.UserRepositoryJdbc;
+import guru.qa.niffler.db.repository.UserRepositorySJdbc;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
 
@@ -12,7 +12,7 @@ import java.util.*;
 public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
     public static final ExtensionContext.Namespace NAMESPACE
             = ExtensionContext.Namespace.create(UserAuthExtension.class);
-    private final UserRepository userRepository = new UserRepositoryJdbc();
+    private final UserRepository userRepository = new UserRepositorySJdbc();
     private final Faker faker  = new Faker();
     static String userAuthDataKey = "userAuthDataKey";
     static String userDataKey = "userDataKey";
@@ -36,20 +36,20 @@ public class UserAuthExtension implements BeforeEachCallback, AfterEachCallback,
                 username = faker.funnyName().name();
                 password = faker.internet().password();
             }
-           UserAuthEntity userAuth = UserAuthEntity.builder()
-                    .username(username)
-                    .password(password)
-                    .enabled(true)
-                    .accountNonExpired(true)
-                    .accountNonLocked(true)
-                    .credentialsNonExpired(true)
-                    .authorities(Arrays.stream(Authority.values())
+           UserAuthEntity userAuth = new UserAuthEntity();
+                   userAuth.setUsername(username);
+                   userAuth.setPassword(password);
+                   userAuth.setEnabled(true);
+                   userAuth.setCredentialsNonExpired(true);
+                   userAuth.setAccountNonLocked(true);
+                   userAuth.setAccountNonExpired(true);
+                   userAuth.setAuthorities(Arrays.stream(Authority.values())
                             .map(e -> {
                                 AuthorityEntity ae = new AuthorityEntity();
                                 ae.setAuthority(e);
                                 return ae;
-                            }).toList())
-                    .build();
+                            }).toList());
+
             UserEntity user = UserEntity.builder()
                     .username(username)
                     .currency(CurrencyValues.RUB)
