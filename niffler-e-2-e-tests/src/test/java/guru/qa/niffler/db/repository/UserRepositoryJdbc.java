@@ -155,7 +155,7 @@ public class UserRepositoryJdbc implements UserRepository{
     }
 
     @Override
-    public UserAuthEntity updateInAuth(UUID id, UserAuthEntity user) {
+    public UserAuthEntity updateInAuth(UserAuthEntity user) {
         try(Connection connection = authDs.getConnection()) {
             try (PreparedStatement userPs = connection.prepareStatement("UPDATE \"user\" " +
                     "SET username = ?, password = ?, enabled = ?, account_non_expired = ?, " +
@@ -167,13 +167,15 @@ public class UserRepositoryJdbc implements UserRepository{
                 userPs.setBoolean(4, user.getAccountNonExpired());
                 userPs.setBoolean(5, user.getAccountNonLocked());
                 userPs.setBoolean(6, user.getCredentialsNonExpired());
-                userPs.setObject(7, id);
+                userPs.setObject(7, user.getId());
 
                 userPs.executeUpdate();
                 connection.commit();
             } catch (Exception e){
                 connection.rollback();
                 throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -183,8 +185,9 @@ public class UserRepositoryJdbc implements UserRepository{
     }
 
     @Override
-    public UserEntity updateInUserData(UUID id, UserEntity user) {
+    public UserEntity updateInUserData(UserEntity user) {
         try(Connection connection = udDs.getConnection()) {
+            connection.setAutoCommit(false);
             try (PreparedStatement ps = connection.prepareStatement("UPDATE \"user\" " +
                     "SET username = ?, currency = ?, firstname = ?, surname = ?, " +
                     "photo = ? WHERE id = ?");
@@ -200,14 +203,14 @@ public class UserRepositoryJdbc implements UserRepository{
                 ps.setString(3, user.getFirstname());
                 ps.setString(4, user.getSurname());
                 ps.setBytes(5, user.getPhoto());
-                ps.setObject(6, id);
+                ps.setObject(6, user.getId());
                 ps.executeUpdate();
-                user.setId(id);
-                deleteFromAuthority.setObject(1, id);
+
+                deleteFromAuthority.setObject(1, user.getId());
                 deleteFromAuthority.executeUpdate();
 
                 for (Authority authority : Authority.values()) {
-                    updateAuthority.setObject(1, id);
+                    updateAuthority.setObject(1, user.getId());
                     updateAuthority.setString(2, authority.name());
                     updateAuthority.addBatch();
                     updateAuthority.clearParameters();

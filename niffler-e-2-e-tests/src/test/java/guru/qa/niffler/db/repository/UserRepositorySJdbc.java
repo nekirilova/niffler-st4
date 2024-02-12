@@ -119,7 +119,7 @@ public class UserRepositorySJdbc implements UserRepository{
     }
 
     @Override
-    public UserAuthEntity updateInAuth(UUID id, UserAuthEntity user) {
+    public UserAuthEntity updateInAuth(UserAuthEntity user) {
         authTemplate.update(con -> {
             PreparedStatement ps = con.prepareStatement(
                     "UPDATE \"user\" " +
@@ -131,16 +131,16 @@ public class UserRepositorySJdbc implements UserRepository{
             ps.setBoolean(4, user.getAccountNonExpired());
             ps.setBoolean(5, user.getAccountNonLocked());
             ps.setBoolean(6, user.getCredentialsNonExpired());
-            ps.setObject(7, id);
+            ps.setObject(7, user.getId());
             return ps;
         });
-        authTemplate.update("DELETE FROM \"authority\" WHERE user_id = ?", id);
+        authTemplate.update("DELETE FROM \"authority\" WHERE user_id = ?", user.getId());
 
         authTemplate.batchUpdate("INSERT INTO \"authority\" (user_id, authority) VALUES (?, ?)",
                 new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setObject(1, id);
+                ps.setObject(1, user.getId());
                 ps.setString(2, user.getAuthorities().get(i).getAuthority().name());
             }
 
@@ -153,7 +153,7 @@ public class UserRepositorySJdbc implements UserRepository{
     }
 
     @Override
-    public UserEntity updateInUserData(UUID id, UserEntity user) {
+    public UserEntity updateInUserData(UserEntity user) {
         udTemplate.update( con -> {
             PreparedStatement ps = con.prepareStatement(
                     "UPDATE \"user\" " +
@@ -164,8 +164,8 @@ public class UserRepositorySJdbc implements UserRepository{
             ps.setString(3, user.getFirstname());
             ps.setString(4, user.getSurname());
             ps.setBytes(5, user.getPhoto());
-            ps.setObject(6, id);
-            user.setId(id);
+            ps.setObject(6, user.getId());
+
         return ps;
         });
         return user;

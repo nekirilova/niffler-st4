@@ -50,7 +50,7 @@ public class LoginWithUserRepositoryTest {
         userRepository.createInUserData(user);
         user.setSurname("Black");
         user.setFirstname("Nessa");
-        userRepository.updateInUserData(user.getId(), user);
+        userRepository.updateInUserData(user);
     }
 
     @AfterEach
